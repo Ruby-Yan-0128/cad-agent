@@ -6,8 +6,12 @@ LEG_40 = 40.0
 WIDTH = 30.0
 THICKNESS = 5.0
 INSIDE_FILLET = 3.0
-HOLE_DIA = 5.0
+HOLE_DIA = 6.6
 HOLE_RADIUS = HOLE_DIA / 2
+GUSSET_THICKNESS = 4.0
+GUSSET_LENGTH = 25.0
+GUSSET_HEIGHT = 25.0
+OUTER_CHAMFER = 1.5
 
 
 with BuildPart() as bracket:
@@ -26,6 +30,16 @@ with BuildPart() as bracket:
     if len(inside_edges) != 1:
         raise ValueError("Could not identify the bracket's inside fillet edge")
     fillet(inside_edges, radius=INSIDE_FILLET)
+
+    chamfer(bracket.edges().filter_by(GeomType.LINE), length=OUTER_CHAMFER)
+
+    with BuildSketch(Plane.XZ):
+        Polygon(
+            (THICKNESS, THICKNESS),
+            (GUSSET_LENGTH, THICKNESS),
+            (THICKNESS, GUSSET_HEIGHT),
+        )
+    extrude(amount=GUSSET_THICKNESS, both=True)
 
     with Locations((LEG_50 / 2, 0, THICKNESS / 2)):
         Hole(radius=HOLE_RADIUS)
