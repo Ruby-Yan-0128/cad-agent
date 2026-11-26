@@ -1,48 +1,64 @@
 const API = "http://127.0.0.1:8000";
+let interactionId = null;
 
-document.getElementById("runBtn").addEventListener("click", async () => {
-  const filename = document.getElementById("filename").value.trim();
-  const code = document.getElementById("code").value.trim();
-  const statusEl = document.getElementById("status");
-  const previewEl = document.getElementById("preview");
-  const downloadEl = document.getElementById("download");
+const promptEl = document.getElementById("prompt");
+const sendBtn = document.getElementById("sendBtn");
+const newChatBtn = document.getElementById("newChatBtn");
+const replyEl = document.getElementById("reply");
+const previewEl = document.getElementById("preview");
+const downloadEl = document.getElementById("download");
+const codeDetails = document.getElementById("codeDetails");
+const codeBlock = document.getElementById("codeBlock");
 
-  statusEl.textContent = "Running...";
+newChatBtn.addEventListener("click", () => {
+  interactionId = null;
+  promptEl.value = "";
+  replyEl.textContent = "Started a new session.";
   previewEl.style.display = "none";
   downloadEl.style.display = "none";
+  codeDetails.style.display = "none";
+});
+
+sendBtn.addEventListener("click", async () => {
+  const prompt = promptEl.value.trim();
+  if (!prompt) return;
+
+  sendBtn.disabled = true;
+  replyEl.textContent = "Generating, running build123d, and visually inspecting...";
 
   try {
-    let data;
-    if (code) {
-      const res = await fetch(`${API}/save-and-run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename, code }),
-      });
-      data = await res.json();
-      if (!res.ok) throw new Error(JSON.stringify(data));
-    } else {
-      const res = await fetch(`${API}/render`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ script_path: filename }),
-      });
-      data = await res.json();
-      if (!res.ok) throw new Error(JSON.stringify(data));
+    const res = await fetch(`${API}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        previous_interaction_id: interactionId,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+
+    interactionId = data.interaction_id;
+    replyEl.textContent = data.reply || "Done.";
+
+    if (data.artifact) {
+      if (data.artifact.image_url) {
+        previewEl.src = `${data.artifact.image_url}?t=${Date.now()}`;
+        previewEl.style.display = "block";
+      }
+      if (data.artifact.step_url) {
+        downloadEl.href = data.artifact.step_url;
+        downloadEl.textContent = `Download ${data.artifact.filename.replace(/\.py$/, ".step")}`;
+        downloadEl.style.display = "inline-block";
+      }
+      if (data.artifact.code) {
+        codeBlock.textContent = data.artifact.code;
+        codeDetails.style.display = "block";
+      }
     }
-
-    statusEl.textContent = JSON.stringify(data.run ?? { ok: data.ok }, null, 2);
-
-    if (data.image_url) {
-      // Cache-bust query param forces the browser to reload the updated PNG
-      previewEl.src = `${data.image_url}?t=${Date.now()}`;
-      previewEl.style.display = "block";
-    }
-
-    const stem = filename.replace(/\.py$/, "").split(/[\\/]/).pop();
-    downloadEl.href = `${API}/exports/${stem}.step`;
-    downloadEl.style.display = "inline-block";
   } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
+    replyEl.textContent = `Error: ${err.message}`;
+  } finally {
+    sendBtn.disabled = false;
   }
 });

@@ -4,30 +4,36 @@
   <meta charset="utf-8" />
   <style>
     body { font-family: system-ui, sans-serif; margin: 12px; background: #1e1e1e; color: #e5e5e5; }
-    label { display: block; font-size: 12px; margin-top: 10px; color: #aaa; }
-    input, textarea { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 6px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 4px; font-family: monospace; }
-    textarea { height: 180px; resize: vertical; }
-    button { margin-top: 10px; width: 100%; padding: 8px; background: #0e639c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-    button:hover { background: #1177bb; }
-    #status { margin-top: 10px; font-size: 12px; white-space: pre-wrap; color: #9cdcfe; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    h3 { margin: 0; }
+    #newChatBtn { padding: 4px 8px; background: #333; color: #ccc; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    textarea { width: 100%; box-sizing: border-box; height: 90px; padding: 8px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 4px; font-family: inherit; resize: vertical; }
+    #sendBtn { margin-top: 8px; width: 100%; padding: 8px; background: #0e639c; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    #sendBtn:disabled { opacity: 0.5; cursor: wait; }
+    #reply { margin-top: 12px; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
     #preview { width: 100%; margin-top: 10px; border-radius: 4px; display: none; border: 1px solid #444; }
     #download { display: none; margin-top: 8px; color: #4ec9b0; font-size: 13px; }
+    details { margin-top: 10px; display: none; }
+    pre { background: #141414; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 11px; }
   </style>
 </head>
 <body>
-  <h3 style="margin: 0 0 8px 0;">CAD Agent</h3>
+  <div class="header">
+    <h3>CAD Agent</h3>
+    <button id="newChatBtn">New Chat</button>
+  </div>
 
-  <label for="filename">Model filename (inside models/)</label>
-  <input id="filename" type="text" value="l_bracket.py" />
+  <textarea id="prompt" placeholder="Describe a part or edit (e.g., Make a 40x40x15mm flanged bearing block with a 12mm center bore and four M4 mounting holes)..."></textarea>
+  <button id="sendBtn">Generate / Edit Model</button>
 
-  <label for="code">build123d script (leave blank to just render existing file)</label>
-  <textarea id="code" placeholder="Paste build123d Python code here..."></textarea>
-
-  <button id="runBtn">Run &amp; Render</button>
-
-  <div id="status"></div>
+  <div id="reply"></div>
   <img id="preview" alt="Rendered CAD views" />
   <a id="download" target="_blank">Download STEP file</a>
+
+  <details id="codeDetails">
+    <summary style="cursor: pointer; font-size: 12px; color: #aaa;">View generated build123d script</summary>
+    <pre id="codeBlock"></pre>
+  </details>
 
   <script src="sidepanel.js"></script>
 </body>
